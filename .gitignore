@@ -130,3 +130,4 @@ dmypy.json
 
 loginConfiguration.json
 .DS_Store
+/flask_session

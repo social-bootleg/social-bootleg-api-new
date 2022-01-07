@@ -9,6 +9,7 @@ instaloader = "*"
 insta-scrape = "*"
 instagramy = "*"
 selenium = "*"
+flask-session = "*"
 
 [dev-packages]
 

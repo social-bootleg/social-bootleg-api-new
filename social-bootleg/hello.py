@@ -1,5 +1,6 @@
 from os import linesep
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, session
+from flask_session import Session
 import instagramy
 from instaloader.structures import TopSearchResults
 from instascrape import *
@@ -10,6 +11,12 @@ import json
 from instaloader.exceptions import PrivateProfileNotFollowedException, ProfileNotExistsException
 
 app = Flask(__name__)
+app.secret_key = 'secret key'
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config.from_object(__name__)
+
+sess = Session()
+sess.init_app(app)
 L = instaloader.Instaloader()
 session_id = "50206634772%3A1ejDURc3jLJAYp%3A8" # to be loaded from JSON
 headers = {
@@ -44,6 +51,7 @@ def process_json_from_enduser(requestToProcess, toExtract):
   extracted = data[f'{toExtract}']
   return extracted
 
+# for performance reasons, this site must be accessed at start of browsing the front-end!!!
 @app.route("/", methods=['POST'])
 def hello_world():
   username = process_json_from_enduser(request, 'username')
@@ -54,30 +62,15 @@ def hello_world():
     "following" : f"{user.following}",
     "followers" : f"{user.followers}"
   }
+
+  # save data for further processing
+  profile = instaloader.Profile.from_username(getContext(), username)
+  all_posts = profile.get_posts()
+  posts = []
+  for post in all_posts:
+    posts.append(post)
+  session['posts'] = posts
   return jsonify(user_basic_data)
-
-@app.route("/hashtags")
-def hashtag_count():
-  # h = Hashtag("cat")
-  # h.scrape(headers=headers)
-  tagname = 'cat'
-  context = getContext()
-  results = TopSearchResults(context, tagname) 
-  time.sleep(0.5)
-  related_tags = list(results.get_hashtags())
-  for i in range(0,3):
-    for tag in related_tags:
-      results = TopSearchResults(context, tag.name)
-      time.sleep(0.5)
-      related_tags.extend(results.get_hashtags())
-      time.sleep(0.5)
-
-  tag_names = []
-  for tag in related_tags:
-   tag_names.append(tag.name)
-  
-  return jsonify(tag_names)
-  
 
 @app.route("/engagement", methods=['POST'])
 def get_engagement():
@@ -85,7 +78,7 @@ def get_engagement():
   profile = Profile(username)
   profile.scrape(headers=headers)
   followers_count = profile.followers
-  posts = profile.get_recent_posts()
+  posts = session.get('posts',profile.get_recent_posts())
   
   likes = 0
   comments = 0
@@ -95,7 +88,7 @@ def get_engagement():
   
   engagement = (likes+comments)/followers_count
   engagement_rate = {
-    "posts" : f'{likes}',
+    "likes" : f'{likes}',
     "comments" : f'{comments}',
     "engagement" : f'{engagement}'
   }
@@ -106,7 +99,8 @@ def get_most_liked_posts():
     PROFILE = process_json_from_enduser(request, 'username')
     most_liked = []
     profile = instaloader.Profile.from_username(getContext(), PROFILE)
-    posts_sorted_by_likes = sorted(profile.get_posts(),
+    posts = session.get('posts',profile.get_posts())
+    posts_sorted_by_likes = sorted(posts,
                                key=lambda p: p.likes + p.comments,
                                reverse=True)
     if (len(posts_sorted_by_likes)>10):
@@ -169,3 +163,20 @@ def related_tags():
   tags = tags_text.split(' ')
   tags[:] = [x for x in tags if x]
   return jsonify(tags)
+
+@app.route("/posts_stats")
+def get_posts_stats():
+  pass
+
+@app.route("/unanswered_comments")
+def get_unaswered_comments():
+  username = "sweet__potat"
+  profile = instaloader.Profile.from_username(getContext(), username)
+  time.sleep(0.5)
+  posts = profile.get_posts()
+  time.sleep(0.5)
+  for post in posts:
+    post.get_comments()
+    time.sleep(0.3)
+
+  return '0'

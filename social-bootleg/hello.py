@@ -1,14 +1,14 @@
+from os import linesep
 from flask import Flask, jsonify, request
-from instagramy import *
+import instagramy
 from instaloader.structures import TopSearchResults
 from instascrape import *
 from selenium.webdriver import Chrome
 import instaloader
 import json
 from instaloader.exceptions import PrivateProfileNotFollowedException, ProfileNotExistsException
-import instascrape
+
 app = Flask(__name__)
-user = "" # to change profile that is checked by the app, user will have to get back to homepage
 L = instaloader.Instaloader()
 session_id = "50206634772%3A1ejDURc3jLJAYp%3A8" # to be loaded from JSON
 headers = {
@@ -55,14 +55,6 @@ def hello_world():
   }
   return jsonify(user_basic_data)
 
-@app.route("/profile")
-def profile():
-  webdriver = Chrome()
-  
-  profile = Profile(user)
-  profile.scrape(headers=headers)
-  return f'{profile.followers}'
-
 @app.route("/hashtags")
 def hashtag_count():
   # h = Hashtag("cat")
@@ -74,7 +66,7 @@ def hashtag_count():
   for i in range(0,5):
     for tag in related_tags:
       results = TopSearchResults(context, tag.name)
-      related_tags.append() 
+      related_tags.extend(results.get_hashtags())
   tag_names = []
   for tag in related_tags:
    tag_names.append(tag.name)
@@ -85,21 +77,22 @@ def hashtag_count():
 @app.route("/engagement", methods=['POST'])
 def get_engagement():
   username = process_username_json(request)
-  webdriver = Chrome()
   profile = Profile(username)
   profile.scrape(headers=headers)
   followers_count = profile.followers
-  posts = profile.get_posts(webdriver=webdriver, login_first=False)
-  scraped, unscraped = scrape_posts(posts, silent=False, headers=headers, pause=7)
+  posts = profile.get_recent_posts()
+  # scraped, unscraped = scrape_posts(posts, silent=False, headers=headers, pause=7)
   
   likes = 0
   comments = 0
-  for post in scraped:
+  for post in posts:
     likes = likes + post.likes
     comments = comments + post.comments
   
   engagement = (likes+comments)/followers_count
   engagement_rate = {
+    "posts" : f'{likes}',
+    "comments" : f'{comments}',
     "engagement" : f'{engagement}'
   }
   return jsonify(engagement_rate)
@@ -119,16 +112,20 @@ def get_likes(user):
     return "No profile found"
   return user;
 
-@app.route("/mostlikedposts/<user>")
-def get_most_liked_posts(user):
-    USER = user
-    PROFILE = USER
+@app.route("/mostlikedposts", methods=['POST'])
+def get_most_liked_posts():
+    PROFILE = process_username_json(request)
+    most_liked = []
     profile = instaloader.Profile.from_username(getContext(), PROFILE)
     posts_sorted_by_likes = sorted(profile.get_posts(),
                                key=lambda p: p.likes + p.comments,
                                reverse=True)
-
-    return user;
+    if (len(posts_sorted_by_likes)>10):
+      posts_sorted_by_likes = posts_sorted_by_likes[:10]
+    
+    for post in posts_sorted_by_likes:
+      most_liked.append({"picture_url": f'{post.url}', "likes" : f'{post.likes}', "comments" : f'{post.comments}'})
+    return jsonify(most_liked);
 
 @app.route("/ghostfollowers")
 def get_ghost_followers():
@@ -180,7 +177,7 @@ def notFollowingBack():
   try:
     profile = instaloader.Profile.from_username(context, username)
   except ProfileNotExistsException:
-    return user, 404
+    return username, 404
   except PrivateProfileNotFollowedException:
     return "You cannot trace private profiles", 401
   followers = set(profile.get_followers())
@@ -189,3 +186,45 @@ def notFollowingBack():
 
   return jsonify(not_following_back)
 
+@app.route("/test")
+def test():
+  driver = Chrome()
+  driver.get("https://www.instagram.com/")
+  time.sleep(1)
+  notnow = driver.find_element_by_xpath("//button[contains(text(), 'Akceptuję wszystko')]").click()
+  #login
+  time.sleep(5)
+  username=driver.find_element_by_css_selector("input[name='username']")
+  password=driver.find_element_by_css_selector("input[name='password']")
+  username.clear()
+  password.clear()
+  username.send_keys("jiraikeidreams")
+  password.send_keys("bibi98")
+  time.sleep(2)
+  login = driver.find_element_by_css_selector("button[type='submit']").click()
+  time.sleep(4)
+  notnow = driver.find_element_by_xpath("//button[contains(text(), 'Nie teraz')]").click()
+  #searchbox
+  time.sleep(2)
+  searchbox=driver.find_element_by_css_selector("input[placeholder='Szukaj']")
+  searchbox.clear()
+  searchbox.send_keys("#cat")
+  names = []
+  tags = []
+  links = []
+  # h_name = driver.find_elements_by_xpath("//div[contains(text(), '#')]")
+  hashtag = driver.find_element_by_class_name("fuqBx ").find_elements_by_tag_name("div")
+  # for h in hashtag:
+  #   tags.extend(h.find_elements_by_tag_name("div"))
+  for t in hashtag:
+    links.append(t.find_element_by_tag_name("a"))
+    #links.extend(t.find_elements_by_class_name("-qQT3"))
+  for l in links:
+    names.append(l.get_attribute("href"))
+
+
+  # for h in hashtag:
+  #   p = h.get_attribute('href')
+  #   if '/explore/tags' in h:
+  #     names.append(h.getText())
+  return jsonify(names)

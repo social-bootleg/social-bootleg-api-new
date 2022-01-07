@@ -129,5 +129,4 @@ dmypy.json
 .pyre/
 
 loginConfiguration.json
-hello.py
 .DS_Store

@@ -18,10 +18,10 @@ app.config.from_object(__name__)
 sess = Session()
 sess.init_app(app)
 L = instaloader.Instaloader()
-session_id = "50206634772%3APecxgQ3MUFwXwN%3A9" # to be loaded from JSON
+session_id = "50206634772%3AW7iRpA5vMyIGDp%3A17" # to be loaded from JSON
 headers = {
     "user-agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36 Edg/87.0.664.57",
-    "cookie": "sessionid=50206634772%3A1ejDURc3jLJAYp%3A8;"
+    "cookie": "sessionid=50206634772%3AW7iRpA5vMyIGDp%3A17;"
   }
 
 def getContext():
@@ -164,9 +164,18 @@ def related_tags():
   tags[:] = [x for x in tags if x]
   return jsonify(tags)
 
-@app.route("/posts_stats")
+@app.route("/posts_stats", methods=['POST'])
 def get_posts_stats():
-  pass
+  username = process_json_from_enduser(request, 'username')
+  profile = session.get('profile',instaloader.Profile.from_username(getContext(), username))
+  time.sleep(0.2)
+  all_posts = session.get('posts',profile.get_posts())
+  posts = []
+  time.sleep(0.5)
+  for post in all_posts:
+    posts.append({'likes' : f'{post.likes}', 'comments' : f'{post.comments}', 'date' : f'{post.date}'})
+  
+  return jsonify(posts)
 
 @app.route("/unanswered_comments", methods=['POST'])
 def get_unaswered_comments():

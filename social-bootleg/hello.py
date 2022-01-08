@@ -58,6 +58,7 @@ def hello_world():
   username = process_json_from_enduser(request, 'username')
   user = Profile(username)
   user.scrape(headers=headers)
+  
   user_basic_data = {
     "name" : f"{user.full_name}",
     "following" : f"{user.following}",
@@ -112,9 +113,9 @@ def get_most_liked_posts():
       most_liked.append({"picture_url": f'{post.url}', "likes" : f'{post.likes}', "comments" : f'{post.comments}'})
     return jsonify(most_liked);
 
-@app.route("/ghostfollowers")
+@app.route("/ghostfollowers", methods=['POST'])
 def get_ghost_followers():
-    user = "sweet__potat"
+    user = process_json_from_enduser(request, 'username')
     profile = session.get('profile',instaloader.Profile.from_username(getContext(), user))
     likes = set()
     posts = session.get('posts',profile.get_posts())
@@ -131,22 +132,19 @@ def get_ghost_followers():
 
     return jsonify(ghosts)
 
-# it's not working!
 @app.route("/nofollowback", methods=['POST'])
 def notFollowingBack():
-  username = process_json_from_enduser(request)
+  username = process_json_from_enduser(request, 'username')
   context = getContext()
-  try:
-    profile = instaloader.Profile.from_username(context, username)
-  except ProfileNotExistsException:
-    return username, 404
-  except PrivateProfileNotFollowedException:
-    return "You cannot trace private profiles", 401
+  profile = session.get('profile',instaloader.Profile.from_username(context, username))
   
   followers = set(profile.get_followers())
   followees = set(profile.get_followees())
   profiles_not_following_back = list(followees - followers)
-  
+  not_following_back = []
+
+  for ghost in profiles_not_following_back:
+      not_following_back.append({"user" : f'{ghost.full_name}', "username" : f'{ghost.username}'})
 
   return jsonify(not_following_back)
 
@@ -170,15 +168,26 @@ def related_tags():
 def get_posts_stats():
   pass
 
-@app.route("/unanswered_comments")
+@app.route("/unanswered_comments", methods=['POST'])
 def get_unaswered_comments():
-  username = "sweet__potat"
-  profile = instaloader.Profile.from_username(getContext(), username)
+  username = process_json_from_enduser(request, 'username')
+  profile = session.get('profile',instaloader.Profile.from_username(getContext(), username))
+  time.sleep(0.2)
+  posts = session.get('posts',profile.get_posts())
   time.sleep(0.5)
-  posts = profile.get_posts()
-  time.sleep(0.5)
+  unanswered_comments = []
+  unanswered = []
   for post in posts:
-    post.get_comments()
-    time.sleep(0.3)
+    comments = post.get_comments()
+    time.sleep(0.2)
+    temp_answers = []
+    for c in comments:
+      ans = c.answers
+      for a in ans:
+        temp_answers.append(a)
+      if(len(temp_answers)==0):
+        unanswered_comments.append(c)
 
-  return '0'
+  for c in unanswered_comments:
+    unanswered.append({'author' : f'{c.owner.username}', 'text' : f'{c.text}', 'date' : f'{c.created_at_utc}'})
+  return jsonify(unanswered)

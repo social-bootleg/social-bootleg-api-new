@@ -18,7 +18,7 @@ app.config.from_object(__name__)
 sess = Session()
 sess.init_app(app)
 L = instaloader.Instaloader()
-session_id = "50206634772%3A1ejDURc3jLJAYp%3A8" # to be loaded from JSON
+session_id = "50206634772%3APecxgQ3MUFwXwN%3A9" # to be loaded from JSON
 headers = {
     "user-agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36 Edg/87.0.664.57",
     "cookie": "sessionid=50206634772%3A1ejDURc3jLJAYp%3A8;"
@@ -27,12 +27,13 @@ headers = {
 def getContext():
     configFile = open('./social-bootleg/loginConfiguration.json')
     config = json.load(configFile)
-    
-    try:
-        L.load_session_from_file(config['username'])
-    except FileNotFoundError:
-        L.login(config['username'], config['password'])
-        L.save_session_to_file()
+    L.login(config['username'], config['password'])
+    time.sleep(0.7)
+    # try:
+    #     L.load_session_from_file(config['username'])
+    # except FileNotFoundError:
+    #     L.login(config['username'], config['password'])
+    #     L.save_session_to_file()
     
     return L.context
 
@@ -62,13 +63,14 @@ def hello_world():
     "following" : f"{user.following}",
     "followers" : f"{user.followers}"
   }
-
+  session['simple_profile'] = user
   # save data for further processing
   profile = instaloader.Profile.from_username(getContext(), username)
   all_posts = profile.get_posts()
   posts = []
   for post in all_posts:
     posts.append(post)
+  session['profile'] = profile
   session['posts'] = posts
   return jsonify(user_basic_data)
 
@@ -98,7 +100,7 @@ def get_engagement():
 def get_most_liked_posts():
     PROFILE = process_json_from_enduser(request, 'username')
     most_liked = []
-    profile = instaloader.Profile.from_username(getContext(), PROFILE)
+    profile = session.get('profile', instaloader.Profile.from_username(getContext(), PROFILE))
     posts = session.get('posts',profile.get_posts())
     posts_sorted_by_likes = sorted(posts,
                                key=lambda p: p.likes + p.comments,
@@ -110,25 +112,24 @@ def get_most_liked_posts():
       most_liked.append({"picture_url": f'{post.url}', "likes" : f'{post.likes}', "comments" : f'{post.comments}'})
     return jsonify(most_liked);
 
-# it's not working!
 @app.route("/ghostfollowers")
 def get_ghost_followers():
     user = "sweet__potat"
-    try:
-      profile = instaloader.Profile.from_username(getContext(), user)
-    except ProfileNotExistsException:
-      return "No profile found"
-    except PrivateProfileNotFollowedException:
-      return "You cannot trace private profiles"
-    time.sleep(0.5)
+    profile = session.get('profile',instaloader.Profile.from_username(getContext(), user))
     likes = set()
-    for post in profile.get_posts():
+    posts = session.get('posts',profile.get_posts())
+    for post in posts:
         likes = likes | set(post.get_likes())
-        time.sleep(1)
+        time.sleep(0.2)
 
     followers = set(profile.get_followers())
-    ghosts = list(followers - likes)
-    return json(ghosts)
+    ghost_profiles = list(followers - likes)
+    ghosts = []
+    
+    for ghost in ghost_profiles:
+      ghosts.append({"user" : f'{ghost.full_name}', "username" : f''})
+
+    return jsonify(ghosts)
 
 # it's not working!
 @app.route("/nofollowback", methods=['POST'])
@@ -144,7 +145,8 @@ def notFollowingBack():
   
   followers = set(profile.get_followers())
   followees = set(profile.get_followees())
-  not_following_back = list(followers - followees)
+  profiles_not_following_back = list(followees - followers)
+  
 
   return jsonify(not_following_back)
 

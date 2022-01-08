@@ -18,10 +18,11 @@ app.config.from_object(__name__)
 sess = Session()
 sess.init_app(app)
 L = instaloader.Instaloader()
-session_id = "50206634772%3AW7iRpA5vMyIGDp%3A17" # to be loaded from JSON
+
+session_id = json.load(open('./social-bootleg/session_token.json'))['token'] # to be loaded from JSON
 headers = {
     "user-agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36 Edg/87.0.664.57",
-    "cookie": "sessionid=50206634772%3AW7iRpA5vMyIGDp%3A17;"
+    "cookie": f"sessionid={session_id};"
   }
 
 def getContext():
@@ -29,11 +30,6 @@ def getContext():
     config = json.load(configFile)
     L.login(config['username'], config['password'])
     time.sleep(0.7)
-    # try:
-    #     L.load_session_from_file(config['username'])
-    # except FileNotFoundError:
-    #     L.login(config['username'], config['password'])
-    #     L.save_session_to_file()
     
     return L.context
 
@@ -52,9 +48,13 @@ def process_json_from_enduser(requestToProcess, toExtract):
   extracted = data[f'{toExtract}']
   return extracted
 
+@app.route("/")
+def hello_world():
+  return 'Welcome to social-bootleg! \r\nEnter your Instagram username to get started.'
+
 # for performance reasons, this site must be accessed at start of browsing the front-end!!!
 @app.route("/", methods=['POST'])
-def hello_world():
+def get_basic_data():
   username = process_json_from_enduser(request, 'username')
   user = Profile(username)
   user.scrape(headers=headers)

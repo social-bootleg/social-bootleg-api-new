@@ -58,9 +58,9 @@ def get_basic_data():
   username = process_json_from_enduser(request, 'username')
   user = Profile(username)
   user.scrape(headers=headers)
-  
+  full_name = user.full_name if user.full_name != "" else username
   user_basic_data = {
-    "name" : f"{user.full_name}",
+    "name" : f"{full_name}",
     "following" : f"{user.following}",
     "followers" : f"{user.followers}"
   }

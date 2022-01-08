@@ -1,7 +1,7 @@
 from os import linesep
 from flask import Flask, jsonify, request, session
 from flask_session import Session
-import instagramy
+import operator
 from instaloader.structures import TopSearchResults
 from instascrape import *
 from selenium.webdriver import Chrome
@@ -128,7 +128,7 @@ def get_ghost_followers():
     ghosts = []
     
     for ghost in ghost_profiles:
-      ghosts.append({"user" : f'{ghost.full_name}', "username" : f''})
+      ghosts.append({"user" : f'{ghost.full_name}', "username" : f'{ghost.username}'})
 
     return jsonify(ghosts)
 
@@ -200,3 +200,25 @@ def get_unaswered_comments():
   for c in unanswered_comments:
     unanswered.append({'author' : f'{c.owner.username}', 'text' : f'{c.text}', 'date' : f'{c.created_at_utc}'})
   return jsonify(unanswered)
+
+@app.route("/top_fans", methods = ['POST'])
+def get_top_fans():
+  username = process_json_from_enduser(request, 'username')
+  profile = session.get('profile',instaloader.Profile.from_username(getContext(), username))
+  time.sleep(0.2)
+  posts = session.get('posts',profile.get_posts())
+  time.sleep(0.5)
+  top_fans = {}
+  for post in posts:
+    comments = post.get_comments()
+    time.sleep(0.2)
+    temp_answers = []
+    for c in comments:
+      author = c.owner.username
+      if author in top_fans:
+        top_fans[author] += 1
+      else:
+        top_fans[author] = 1
+  top_fans = sorted(top_fans.items(),key=operator.itemgetter(1),reverse=True)
+  return jsonify(top_fans)
+

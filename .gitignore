@@ -131,3 +131,5 @@ dmypy.json
 loginConfiguration.json
 .DS_Store
 /flask_session
+/social-bootleg/session_token.json
+.vscode

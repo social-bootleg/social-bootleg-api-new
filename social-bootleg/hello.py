@@ -110,7 +110,10 @@ def get_most_liked_posts():
       posts_sorted_by_likes = posts_sorted_by_likes[:10]
     
     for post in posts_sorted_by_likes:
-      most_liked.append({"picture_url": f'{post.url}', "likes" : f'{post.likes}', "comments" : f'{post.comments}'})
+      most_liked.append({"picture_url": f'https://www.instagram.com/p/{post.shortcode}/', "likes" : f'{post.likes}', "comments" : f'{post.comments}'})
+    for post in posts_sorted_by_likes:
+      L.download_post(post, "oliwka_oliwkuje")
+      time.sleep(1)
     return jsonify(most_liked);
 
 @app.route("/ghostfollowers", methods=['POST'])

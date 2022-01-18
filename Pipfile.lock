@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "7fe3b198651356933b3f4b9ca6af175d42b365d36b91de6c960f015cd1b68a78"
+            "sha256": "b98b995f3ac3ad333f55e9ccdb129f71a6d05d625363d1a06113d9bf9272f591"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -108,6 +108,7 @@
                 "sha256:fd8a250edc26254fe5b33be00402e6d287f562b6a5b2152dec302fa15bb3e997",
                 "sha256:ffaa5c925128e29efbde7301d8ecaf35c8c60ffbcd6a1ffd3a552177c8e5e796"
             ],
+            "markers": "os_name == 'nt' and implementation_name != 'pypy'",
             "version": "==1.15.0"
         },
         "charset-normalizer": {
@@ -125,6 +126,29 @@
             ],
             "markers": "python_version >= '3.6'",
             "version": "==8.0.3"
+        },
+        "colorama": {
+            "hashes": [
+                "sha256:5941b2b48a20143d2267e95b1c2a7603ce057ee39fd88e7329b0c292aa16869b",
+                "sha256:9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2"
+            ],
+            "markers": "platform_system == 'Windows'",
+            "version": "==0.4.4"
+        },
+        "configparser": {
+            "hashes": [
+                "sha256:1b35798fdf1713f1c3139016cfcbc461f09edbf099d1fb658d4b7479fcaa3daa",
+                "sha256:e8b39238fb6f0153a069aa253d349467c3c4737934f253ef6abac5fe0eca1e5d"
+            ],
+            "markers": "python_version >= '3.6'",
+            "version": "==5.2.0"
+        },
+        "crayons": {
+            "hashes": [
+                "sha256:bd33b7547800f2cfbd26b38431f9e64b487a7de74a947b0fafc89b45a601813f",
+                "sha256:e73ad105c78935d71fe454dd4b85c5c437ba199294e7ffd3341842bc683654b1"
+            ],
+            "version": "==0.4.0"
         },
         "cryptography": {
             "hashes": [
@@ -158,6 +182,14 @@
             ],
             "index": "pypi",
             "version": "==2.0.2"
+        },
+        "flask-cors": {
+            "hashes": [
+                "sha256:74efc975af1194fc7891ff5cd85b0f7478be4f7f59fe158102e91abb72bb4438",
+                "sha256:b60839393f3b84a0f3746f6cdca56c1ad7426aa738b70d6c61375857823181de"
+            ],
+            "index": "pypi",
+            "version": "==3.0.10"
         },
         "flask-session": {
             "hashes": [
@@ -201,10 +233,10 @@
         },
         "instaloader": {
             "hashes": [
-                "sha256:b594fbcc44d47bd447a6ce442acbcb271391f93b8280a1488e94d82de69ec17a"
+                "sha256:a33324fd22ca90fbeb4bce93551e29f5c532cb252eb25e4d519a16a2bd6dedc6"
             ],
             "index": "pypi",
-            "version": "==4.9b1"
+            "version": "==4.9b2"
         },
         "itsdangerous": {
             "hashes": [
@@ -391,6 +423,14 @@
             ],
             "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4' and python_version < '4'",
             "version": "==1.26.8"
+        },
+        "webdriver-manager": {
+            "hashes": [
+                "sha256:0a0df5e5d5d234702fd5948fec6c3884940aff904425725f15d8bb9eeaee18e8",
+                "sha256:1e3aa366b95b80b260bd71aea3a63ea3f19a6d14308e0cd93e1144ca46b11ef4"
+            ],
+            "index": "pypi",
+            "version": "==3.5.2"
         },
         "werkzeug": {
             "hashes": [

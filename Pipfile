@@ -10,6 +10,8 @@ insta-scrape = "*"
 instagramy = "*"
 selenium = "*"
 flask-session = "*"
+flask-cors = "*"
+webdriver-manager = "*"
 
 [dev-packages]
 
